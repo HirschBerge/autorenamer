@@ -2,7 +2,7 @@
 
 ## Why?
 
-To help myself learn rust. I decided to rewrite my [bash autorenamer]() in Rust. I have learned that I am already better than ChatGPT at writing code that works the first time. But that's not saying much...
+To help myself learn rust. I decided to rewrite my [bash autorenamer](https://github.com/HirschBerge/Scripts/blob/NixOS_Dekstop_Wayland/autorenamer.sh) in Rust. I have learned that I am already better than ChatGPT at writing code that works the first time. But that's not saying much...
 
 ## What?
 
