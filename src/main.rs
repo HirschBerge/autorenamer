@@ -1,7 +1,17 @@
-use clap::{App, Arg};
+use clap::Parser;
 use regex::Regex;
 use std::error::Error;
 use std::{env, fs};
+
+#[derive(Debug, Parser)]
+#[clap(name = "Autorenamer", version = "1.0.1", author = "HirschBerge")]
+
+pub struct Autorename {
+    #[clap(long = "season", short = 's')]
+    season: i32,
+    #[clap(long = "path", short = 'p', required = false)]
+    path: Option<String>,
+}
 
 fn get_files(path: String) -> Result<Vec<String>, Box<dyn Error>> {
     let mut matching_files: Vec<String> = Vec::new();
@@ -64,35 +74,12 @@ fn rename_files(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base_pa
 }
 
 fn main() {
-    let matches = App::new("Rust Autorenamer")
-        .arg(
-            Arg::with_name("path")
-                .short("p")
-                .long("path")
-                .value_name("DIRECTORY")
-                .help("Specify the path (optional, defaults to current directory)")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("season")
-                .short("s")
-                .long("season")
-                .value_name("SEASON")
-                .help("Specify the season as a digit.")
-                .required(true),
-        )
-        .get_matches();
-    let path = matches
-        .value_of("path")
-        .map(|p| p.to_string())
-        .unwrap_or_else(|| env::current_dir().unwrap().to_string_lossy().to_string());
-
-    let season = matches
-        .value_of("season")
-        .unwrap()
-        .parse::<i32>()
-        .expect("Failed to parse the season as an int.");
-
+    let args = Autorename::parse();
+    let mut path: String = args.path.unwrap_or_else(|| String::from("")).to_string();
+    if path.is_empty() {
+        path = env::current_dir().unwrap().to_string_lossy().to_string();
+    }
+    let season = args.season;
     let result = get_files(path.clone());
     rename_files(result, season, path);
 }
