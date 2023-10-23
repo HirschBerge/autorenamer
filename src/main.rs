@@ -1,10 +1,11 @@
 use clap::Parser;
 use regex::Regex;
 use std::error::Error;
+use std::fmt::format;
 use std::{env, fs};
 
 #[derive(Debug, Parser)]
-#[clap(name = "Autorenamer", version = "1.0.1", author = "HirschBerge")]
+#[clap(name = "Autorenamer", version = "1.0.3", author = "HirschBerge")]
 
 pub struct Autorename {
     #[clap(long = "season", short = 's')]
@@ -51,15 +52,16 @@ fn rename_files(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base_pa
                 if let Some(captures) = re.captures(&file) {
                     if let Some(matched_str) = captures.get(0) {
                         let matched_text = &matched_str.as_str()[8..];
-                        let new_file_path =
-                            format!("{}/S{:0>2}E{:0>2}.mp4", &base_path, season, matched_text); // TODO
-                                                                                                // dynamically
-                                                                                                // determine
-                                                                                                // the
-                                                                                                // file
-                                                                                                // extension.
-                                                                                                // println!("{}", new_file_path);
+                        let new_name = format!("S{:0>2}E{:0>2}.mp4", season, &matched_text);
+                        let new_file_path = format!("{}/{}", &base_path, &new_name); // TODO
+                                                                                     // dynamically
+                                                                                     // determine
+                                                                                     // the
+                                                                                     // file
+                                                                                     // extension.
+                                                                                     // println!("{}", new_file_path);
                         let old_name = format!("{}/{}", base_path, file);
+                        println!("{} => {}", file, new_name);
                         let _ = fs::rename(old_name, new_file_path);
                     }
                 } else {

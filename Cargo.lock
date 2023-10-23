@@ -61,7 +61,7 @@ dependencies = [
 
 [[package]]
 name = "autorenamer"
-version = "1.0.0"
+version = "1.0.3"
 dependencies = [
  "clap",
  "regex",
