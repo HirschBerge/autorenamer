@@ -61,7 +61,7 @@ fn rename_files(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base_pa
                                                                                      // extension.
                                                                                      // println!("{}", new_file_path);
                         let old_name = format!("{}/{}", base_path, file);
-                        println!("{} => {}", file, new_name);
+                        println!("\x1b[31m{}\x1b[0m => \x1b[35m{}\x1b[0m", file, new_name);
                         let _ = fs::rename(old_name, new_file_path);
                     }
                 } else {
