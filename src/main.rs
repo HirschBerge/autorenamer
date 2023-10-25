@@ -1,9 +1,10 @@
 use clap::Parser;
 use regex::Regex;
 use std::error::Error;
-use std::fmt::format;
+use std::ffi::OsStr;
+// use std::fmt::format;
+use std::path::Path;
 use std::{env, fs};
-
 #[derive(Debug, Parser)]
 #[clap(name = "Autorenamer", version = "1.0.3", author = "HirschBerge")]
 
@@ -47,21 +48,26 @@ fn rename_files(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base_pa
     match files {
         Ok(files) => {
             for file in files {
-                // let path = Path::new(&file);
                 let re = Regex::new(r"Episode [0-9]{1,3}").unwrap();
                 if let Some(captures) = re.captures(&file) {
                     if let Some(matched_str) = captures.get(0) {
                         let matched_text = &matched_str.as_str()[8..];
-                        let new_name = format!("S{:0>2}E{:0>2}.mp4", season, &matched_text);
-                        let new_file_path = format!("{}/{}", &base_path, &new_name); // TODO
-                                                                                     // dynamically
-                                                                                     // determine
-                                                                                     // the
-                                                                                     // file
-                                                                                     // extension.
-                                                                                     // println!("{}", new_file_path);
+                        let new_name = format!("S{:0>2}E{:0>2}", season, &matched_text); // This
+                                                                                         // breaks
+                                                                                         // after
+                                                                                         // you hit
+                                                                                         // 999.
                         let old_name = format!("{}/{}", base_path, file);
-                        println!("\x1b[31m{}\x1b[0m => \x1b[35m{}\x1b[0m", file, new_name);
+                        let ext = Path::new(&old_name)
+                            .extension()
+                            .and_then(OsStr::to_str)
+                            .unwrap_or("mp4")
+                            .to_string();
+                        let new_file_path = format!("{}/{}.{}", &base_path, &new_name, &ext);
+                        println!(
+                            "\x1b[31m{}\x1b[0m => \x1b[35m{}.{}\x1b[0m",
+                            file, new_name, ext
+                        );
                         let _ = fs::rename(old_name, new_file_path);
                     }
                 } else {
