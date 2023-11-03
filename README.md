@@ -30,8 +30,10 @@ FLAGS:
 OPTIONS:
     -p, --path <DIRECTORY>    Specify the path (optional, defaults to current directory)
     -s, --season <SEASON>     Specify the season as a digit.
-```
 
+EXAMPLE:
+autorenamer --season 1 --path ~/Videos/Anime/Monogatari\ Series/Season\ 1\ Bakemonogatari
+```
 ### People love to talk about how fast Rust is. 
 
 Compared to my bash script, testing on directories with 30,000 empty files to rename, Bash came in at 35 seconds. Not bad. That's a lot of files. This, using rust, on the other hand. Took a whopping.... well `autorenamer --season 1  0.82s user 0.44s system 99% cpu 1.276 total`
