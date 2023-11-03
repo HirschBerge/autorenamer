@@ -48,15 +48,11 @@ fn rename_files(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base_pa
     match files {
         Ok(files) => {
             for file in files {
-                let re = Regex::new(r"Episode [0-9]{1,3}").unwrap();
+                let re = Regex::new(r"Episode [0-9]{1,5}").unwrap();
                 if let Some(captures) = re.captures(&file) {
                     if let Some(matched_str) = captures.get(0) {
                         let matched_text = &matched_str.as_str()[8..];
-                        let new_name = format!("S{:0>2}E{:0>2}", season, &matched_text); // This
-                                                                                         // breaks
-                                                                                         // after
-                                                                                         // you hit
-                                                                                         // 999.
+                        let new_name = format!("S{:0>2}E{:0>2}", season, &matched_text);
                         let old_name = format!("{}/{}", base_path, file);
                         let ext = Path::new(&old_name)
                             .extension()
