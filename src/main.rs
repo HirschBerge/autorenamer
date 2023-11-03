@@ -15,7 +15,7 @@ pub struct Autorename {
     path: Option<String>,
 }
 
-fn get_files(path: String) -> Result<Vec<String>, Box<dyn Error>> {
+fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
     let mut matching_files: Vec<String> = Vec::new();
     if let Ok(files) = fs::read_dir(path) {
         for file in files {
@@ -44,7 +44,7 @@ fn get_files(path: String) -> Result<Vec<String>, Box<dyn Error>> {
         Err("Failed to read the directory".into())
     }
 }
-fn rename_files(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base_path: String) {
+fn rename_episodes(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base_path: String) {
     match files {
         Ok(files) => {
             for file in files {
@@ -88,6 +88,6 @@ fn main() {
         path = env::current_dir().unwrap().to_string_lossy().to_string();
     }
     let season = args.season;
-    let result = get_files(path.clone());
-    rename_files(result, season, path);
+    let result = get_episodes(path.clone());
+    rename_episodes(result, season, path);
 }
