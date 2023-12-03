@@ -39,6 +39,7 @@
             cargo-edit
             cargo-watch
             rust-analyzer
+            bacon
           ];
         };
       });
