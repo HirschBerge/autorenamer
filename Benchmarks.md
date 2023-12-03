@@ -21,7 +21,7 @@ Benchmark 1: autorenamer -p test/ -s 3
   Time (mean ± σ):      2.183 s ±  0.091 s    [User: 1.573 s, System: 0.580 s]
   Range (min … max):    2.065 s …  2.338 s    10 runs
 ```
-### Comparison between Bash and `Structs`
+### Comparison between Bash and v1.0.2
 
 ```
 time --prepare '../benchmarks.sh' '~/.scripts/autorenamer.sh 3' 'autorenamer -p ../test/ -s 3'
@@ -42,10 +42,10 @@ I guess you could say it's pretty quick.
 
 ### Branch `Structs`
 
-
 ```
-time --prepare './benchmarks.sh' 'autorenamer -p test/ -s 3'
+benchmark --prepare './benchmarks.sh' 'autorenamer -p test/ -s 3'
 Benchmark 1: autorenamer -p test/ -s 3
-  Time (mean ± σ):      2.162 s ±  0.073 s    [User: 1.561 s, System: 0.567 s]
-  Range (min … max):    2.079 s …  2.309 s    10 runs
+  Time (mean ± σ):      5.624 s ±  0.093 s    [User: 4.782 s, System: 0.739 s]
+  Range (min … max):    5.487 s …  5.761 s    10 runs
 ```
+Noticing significant performance

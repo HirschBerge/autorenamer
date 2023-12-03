@@ -74,13 +74,14 @@ fn rename_episodes(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base
                 let re = Regex::new(r"Episode \d+").unwrap();
                 if let Some(captures) = re.captures(&file) {
                     if let Some(matched_str) = captures.get(0) {
-                        let matched_text = &matched_str.as_str()[8..];
-                        let new_name = format!("S{:0>2}E{:0>2}", season, &matched_text);
+                        let new_name =
+                            format!("S{:0>2}E{:0>2}", season, &matched_str.as_str()[8..]);
                         let old_name = format!("{}/{}", base_path, file);
                         let episode = Episode::new(old_name, new_name);
-                        let ext = episode.create_ext();
-                        let new_file_path = episode.create_new_path(base_path.clone(), ext, file);
-                        let _ = fs::rename(episode.old_path, new_file_path);
+                        let _ = fs::rename(
+                            &episode.old_path,
+                            episode.create_new_path(base_path.clone(), episode.create_ext(), file),
+                        );
                     }
                 } else {
                     println!("Pattern not found in the input text.");
