@@ -71,7 +71,9 @@ fn rename_episodes(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base
     match files {
         Ok(files) => {
             for file in files {
-                let re = Regex::new(r"Episode \d+").unwrap();
+                let re = Regex::new(r"Episode [0-9]{1,5}").unwrap();
+                // let re = Regex::new(r"Episode /d+").unwrap(); // THIS IS SLOW! \d{1,5} is even
+                // slower somehow
                 if let Some(captures) = re.captures(&file) {
                     if let Some(matched_str) = captures.get(0) {
                         let new_name =

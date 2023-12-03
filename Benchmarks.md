@@ -43,9 +43,9 @@ I guess you could say it's pretty quick.
 ### Branch `Structs`
 
 ```
-benchmark --prepare './benchmarks.sh' 'autorenamer -p test/ -s 3'
-Benchmark 1: autorenamer -p test/ -s 3
-  Time (mean ± σ):      5.624 s ±  0.093 s    [User: 4.782 s, System: 0.739 s]
-  Range (min … max):    5.487 s …  5.761 s    10 runs
+benchmark --prepare './benchmarks.sh' 'autorenamer -p test -s 3' 
+Benchmark 1: autorenamer -p test -s 3
+  Time (mean ± σ):      2.544 s ±  0.094 s    [User: 1.748 s, System: 0.690 s]
+  Range (min … max):    2.405 s …  2.714 s    10 runs
 ```
-Noticing significant performance
+
