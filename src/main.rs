@@ -14,7 +14,30 @@ pub struct Autorename {
     #[clap(long = "path", short = 'p', required = false)]
     path: Option<String>,
 }
-
+#[derive(Debug)]
+struct Episode {
+    old_path: String,
+    new_path: String,
+}
+impl Episode {
+    fn new(old_path: String, new_path: String) -> Episode {
+        Episode { old_path, new_path }
+    }
+    fn create_ext(&self) -> String {
+        return Path::new(&self.old_path)
+            .extension()
+            .and_then(OsStr::to_str)
+            .unwrap_or("mp4")
+            .to_string();
+    }
+    fn create_new_path(&self, base_path: String, ext: String, file: String) -> String {
+        println!(
+            "\x1b[31m{}\x1b[0m => \x1b[35m{}.{}\x1b[0m",
+            file, &self.new_path, ext
+        );
+        format!("{}/{}.{}", base_path, &self.new_path, ext)
+    }
+}
 fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
     let mut matching_files: Vec<String> = Vec::new();
     if let Ok(files) = fs::read_dir(path) {
@@ -49,22 +72,18 @@ fn rename_episodes(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base
         Ok(files) => {
             for file in files {
                 let re = Regex::new(r"Episode [0-9]{1,5}").unwrap();
+                // let re = Regex::new(r"Episode /d+").unwrap(); // THIS IS SLOW! \d{1,5} is even
+                // slower somehow
                 if let Some(captures) = re.captures(&file) {
                     if let Some(matched_str) = captures.get(0) {
-                        let matched_text = &matched_str.as_str()[8..];
-                        let new_name = format!("S{:0>2}E{:0>2}", season, &matched_text);
+                        let new_name =
+                            format!("S{:0>2}E{:0>2}", season, &matched_str.as_str()[8..]);
                         let old_name = format!("{}/{}", base_path, file);
-                        let ext = Path::new(&old_name)
-                            .extension()
-                            .and_then(OsStr::to_str)
-                            .unwrap_or("mp4")
-                            .to_string();
-                        let new_file_path = format!("{}/{}.{}", &base_path, &new_name, &ext);
-                        println!(
-                            "\x1b[31m{}\x1b[0m => \x1b[35m{}.{}\x1b[0m",
-                            file, new_name, ext
+                        let episode = Episode::new(old_name, new_name);
+                        let _ = fs::rename(
+                            &episode.old_path,
+                            episode.create_new_path(base_path.clone(), episode.create_ext(), file),
                         );
-                        let _ = fs::rename(old_name, new_file_path);
                     }
                 } else {
                     println!("Pattern not found in the input text.");
