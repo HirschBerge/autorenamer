@@ -1,10 +1,8 @@
 use clap::Parser;
 use regex::Regex;
-use std::error::Error;
-use std::ffi::OsStr;
+use std::{env, error::Error, ffi::OsStr, fs, path::Path};
 // use std::fmt::format;
-use std::path::Path;
-use std::{env, fs};
+
 #[derive(Debug, Parser)]
 #[clap(name = "Autorenamer", version = "1.0.3", author = "HirschBerge")]
 
@@ -50,7 +48,7 @@ fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
                         .ok_or("Invalid File Name")?
                         .to_string_lossy()
                         .to_string()
-                        .contains("Episode")
+                        .contains("Episode ")
                     {
                         matching_files.push(
                             path.file_name()
@@ -105,4 +103,79 @@ fn main() {
     let season = args.season;
     let result = get_episodes(path.clone());
     rename_episodes(result, season, path);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::get_episodes;
+    use std::fs::{create_dir, File};
+    use std::io::Write;
+    use std::path::Path;
+
+    #[test]
+    fn test_get_episodes_with_matching_files() {
+        // Create a temporary directory for testing
+        let temp_dir = "test_get_episodes_with_matching_files";
+        create_dir(temp_dir).expect("Failed to create temporary directory");
+
+        // Create some files with "Episode" in the name
+        create_test_file(&temp_dir, "Episode 1.mp3");
+        create_test_file(&temp_dir, "Episode 2.mp3");
+        create_test_file(&temp_dir, "Episode 69.mp3");
+        create_test_file(&temp_dir, "Not_An_Episode.mp3");
+
+        // Call the function and check the result
+        let result = get_episodes(temp_dir.to_string());
+        // Clean up: Delete the temporary directory and its contents
+        cleanup_temp_directory(temp_dir);
+        assert!(result.is_ok());
+        let matching_files = result.unwrap();
+        assert_eq!(matching_files.len(), 3);
+        // assert!(matching_files.contains(&"Episode 1.mp3".to_string()));
+        // assert!(matching_files.contains(&"Episode 2.mp3".to_string()));
+    }
+
+    #[test]
+    fn test_get_episodes_with_no_matching_files() {
+        // Create a temporary directory for testing
+        let temp_dir = "test_get_episodes_with_no_matching_files";
+        create_dir(temp_dir).expect("Failed to create temporary directory");
+
+        // Create some files without "Episode" in the name
+        create_test_file(&temp_dir, "Not_An_Episode_1.mp3");
+        create_test_file(&temp_dir, "Not_An_Episode_2.mp3");
+
+        // Call the function and check the result
+        let result = get_episodes(temp_dir.to_string());
+        // Clean up: Delete the temporary directory and its contents
+        cleanup_temp_directory(temp_dir);
+        assert!(result.is_ok());
+        let matching_files = result.unwrap();
+        assert!(matching_files.is_empty());
+    }
+
+    #[test]
+    fn test_get_episodes_with_invalid_directory() {
+        // Call the function with a non-existent directory
+        let result = get_episodes("non_existent_directory".to_string());
+        assert!(result.is_err());
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "Failed to read the directory"
+        );
+    }
+
+    fn create_test_file(directory: &str, filename: &str) {
+        let path = Path::new(directory).join(filename);
+        let mut file = File::create(path).expect("Failed to create test file");
+        file.write_all(b"Test content")
+            .expect("Failed to write to test file");
+    }
+
+    fn cleanup_temp_directory(directory: &str) {
+        // Delete the temporary directory and its contents
+        if Path::new(directory).exists() {
+            std::fs::remove_dir_all(directory).expect("Failed to delete temporary directory");
+        }
+    }
 }
