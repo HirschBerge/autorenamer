@@ -22,11 +22,11 @@ impl Episode {
         Episode { old_path, new_path }
     }
     fn create_ext(&self) -> String {
-        return Path::new(&self.old_path)
+        Path::new(&self.old_path)
             .extension()
             .and_then(OsStr::to_str)
             .unwrap_or("mp4")
-            .to_string();
+            .to_string()
     }
     fn create_new_path(&self, base_path: String, ext: String, file: String) -> String {
         println!(
@@ -123,7 +123,6 @@ mod tests {
         create_test_file(&temp_dir, "Episode 2.mp3");
         create_test_file(&temp_dir, "Episode 69.mp3");
         create_test_file(&temp_dir, "Not_An_Episode.mp3");
-
         // Call the function and check the result
         let result = get_episodes(temp_dir.to_string());
         // Clean up: Delete the temporary directory and its contents
