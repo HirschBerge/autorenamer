@@ -1,2 +1,0 @@
-name: Autorenamer benchmark
-command: benchmark --prepare './benchmarks.sh' 'autorenamer -p test -s 3' && rm -rf test/
