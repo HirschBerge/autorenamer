@@ -47,6 +47,7 @@ fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
             let path = file.path();
             if path.is_file() {
                 // Check for "Episode " in the file name
+                // TODO: Include files with "^E[0-9]{2,3}" so that already-processed files can be included.
                 if let Some(file_name) = path.file_name() {
                     let file_name_str = file_name.to_string_lossy();
                     if file_name_str.contains("Episode ") {
@@ -65,13 +66,12 @@ fn rename_episodes(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base
     match files {
         Ok(files) => {
             for file in files {
+                // TODO: Include files with "^E[0-9]{2,3}" so that already-processed files can be included.
                 let re = Regex::new(r"Episode [0-9]{1,5}").unwrap(); // NOTE: This is probably fine to leave. It works and doesn't overflow the size. See the help. this is a comppile-time error
-                
                 if let Some(captures) = re.captures(&file) {
                     if let Some(matched_str) = captures.get(0) {
                         // Extract the numeric part (episode number) from the matched string
                         let episode_str = &matched_str.as_str()[8..]; // "Episode " is 8 chars long
-
                         // Convert the episode number string to i32
                         if let Ok(episode_num) = episode_str.parse::<i32>() {
                             // Add the offset to the episode number
@@ -80,7 +80,6 @@ fn rename_episodes(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base
                             // Get old and new file paths
                             let old_name = format!("{}/{}", base_path, file);
                             let episode = Episode::new(old_name, new_name);
-                            
                             // Perform the file renaming
                             let _ = fs::rename(
                                 &episode.old_path,
