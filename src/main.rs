@@ -11,7 +11,10 @@ pub struct Autorename {
     season: i32,
     #[clap(long = "path", short = 'p', required = false)]
     path: Option<String>,
+    #[clap(long = "offset", short = 'o', required = false, allow_hyphen_values = true)] // HACK: allow_hyphen_values just lets this take negative values
+    offset: Option<i32>,
 }
+
 #[derive(Debug)]
 struct Episode {
     old_path: String,
@@ -36,52 +39,56 @@ impl Episode {
         format!("{}/{}.{}", base_path, &self.new_path, ext)
     }
 }
+
 fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
-    let mut matching_files: Vec<String> = Vec::new();
-    if let Ok(files) = fs::read_dir(path) {
-        for file in files {
-            if let Ok(file) = file {
-                let path = file.path();
-                if path.is_file() {
-                    if path
-                        .file_name()
-                        .ok_or("Invalid File Name")?
-                        .to_string_lossy()
-                        .to_string()
-                        .contains("Episode ")
-                    {
-                        matching_files.push(
-                            path.file_name()
-                                .ok_or("Invalid")?
-                                .to_string_lossy()
-                                .to_string(),
-                        );
+    let matching_files: Vec<String> = fs::read_dir(path)?
+        .flatten() // Flattens the Result<DirEntry, io::Error> into DirEntry by ignoring errors
+        .filter_map(|file| {
+            let path = file.path();
+            if path.is_file() {
+                // Check for "Episode " in the file name
+                if let Some(file_name) = path.file_name() {
+                    let file_name_str = file_name.to_string_lossy();
+                    if file_name_str.contains("Episode ") {
+                        return Some(file_name_str.to_string()); // Push the matching file name
                     }
                 }
             }
-        }
-        Ok(matching_files)
-    } else {
-        Err("Failed to read the directory".into())
-    }
+            None
+        })
+        .collect();
+
+    Ok(matching_files)
 }
-fn rename_episodes(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base_path: String) {
+
+fn rename_episodes(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base_path: String, offset: i32) {
     match files {
         Ok(files) => {
             for file in files {
-                let re = Regex::new(r"Episode [0-9]{1,5}").unwrap();
-                // let re = Regex::new(r"Episode /d+").unwrap(); // THIS IS SLOW! \d{1,5} is even
-                // slower somehow
+                let re = Regex::new(r"Episode [0-9]{1,5}").unwrap(); // NOTE: This is probably fine to leave. It works and doesn't overflow the size. See the help. this is a comppile-time error
+                
                 if let Some(captures) = re.captures(&file) {
                     if let Some(matched_str) = captures.get(0) {
-                        let new_name =
-                            format!("S{:0>2}E{:0>2}", season, &matched_str.as_str()[8..]);
-                        let old_name = format!("{}/{}", base_path, file);
-                        let episode = Episode::new(old_name, new_name);
-                        let _ = fs::rename(
-                            &episode.old_path,
-                            episode.create_new_path(base_path.clone(), episode.create_ext(), file),
-                        );
+                        // Extract the numeric part (episode number) from the matched string
+                        let episode_str = &matched_str.as_str()[8..]; // "Episode " is 8 chars long
+
+                        // Convert the episode number string to i32
+                        if let Ok(episode_num) = episode_str.parse::<i32>() {
+                            // Add the offset to the episode number
+                            let new_episode_num = episode_num + offset; // NOTE: offset defaults to 0 so does nothing if an offset is not provided.
+                            let new_name = format!("S{:0>2}E{:0>2}", season, new_episode_num);
+                            // Get old and new file paths
+                            let old_name = format!("{}/{}", base_path, file);
+                            let episode = Episode::new(old_name, new_name);
+                            
+                            // Perform the file renaming
+                            let _ = fs::rename(
+                                &episode.old_path,
+                                episode.create_new_path(base_path.clone(), episode.create_ext(), file),
+                            );
+                        } else {
+                            println!("Failed to parse episode number.");
+                        }
                     }
                 } else {
                     println!("Pattern not found in the input text.");
@@ -94,24 +101,75 @@ fn rename_episodes(files: Result<Vec<String>, Box<dyn Error>>, season: i32, base
     }
 }
 
+
+
 fn main() {
     let args = Autorename::parse();
     let mut path: String = args.path.unwrap_or_else(|| String::from("")).to_string();
     if path.is_empty() {
-        path = env::current_dir().unwrap().to_string_lossy().to_string();
+        path = env::current_dir().expect("Expected PWD to be real. Not sure how this happened.").to_string_lossy().to_string();
     }
+    let offset = args.offset.unwrap_or(0);
     let season = args.season;
     let result = get_episodes(path.clone());
-    rename_episodes(result, season, path);
+    rename_episodes(result, season, path, offset);
 }
 
 #[cfg(test)]
 mod tests {
-    use super::get_episodes;
+    use super::{rename_episodes, get_episodes};
+    use std::error::Error;
     use std::fs::{create_dir, File};
     use std::io::Write;
     use std::path::Path;
 
+    #[test]
+    fn test_addition() {
+        // Setup test environment
+        let test_dir = "test_addition_dir";
+        create_dir(test_dir).expect("Failed to create test directory");
+
+        // Create a test file that matches the episode pattern
+        let test_file = "Episode 05.mp4";
+        create_test_file(test_dir, test_file);
+
+        // Prepare the input for the rename_episodes function
+        let files: Result<Vec<String>, Box<dyn Error>> = Ok(vec![test_file.to_string()]);
+        let season = 1;
+        let base_path = test_dir.to_string();
+        let offset = 1;
+
+        // Run the rename_episodes function
+        rename_episodes(files, season, base_path.clone(), offset);
+
+        // Assert that the file was renamed correctly
+        let expected_new_name = format!("{}/S01E06.mp4", test_dir); // Episode number is 05 + offset (1) = 06
+        assert!(Path::new(&expected_new_name).exists(), "Renamed file not found");
+
+        // Clean up the test environment
+        cleanup_temp_directory(test_dir);
+    }
+    #[test]
+fn test_subtraction() {
+        // Setup test environment
+        let test_dir = "test_subtraction_dir";
+        create_dir(test_dir).expect("Failed to create test directory");
+        // Create a test file that matches the episode pattern
+        let test_file = "Episode 05.mp4";
+        create_test_file(test_dir, test_file);
+        // Prepare the input for the rename_episodes function
+        let files: Result<Vec<String>, Box<dyn Error>> = Ok(vec![test_file.to_string()]);
+        let season = 1;
+        let base_path = test_dir.to_string();
+        let offset = -1;
+        // Run the rename_episodes function
+        rename_episodes(files, season, base_path.clone(), offset);
+        // Assert that the file was renamed correctly
+        let expected_new_name = format!("{}/S01E04.mp4", test_dir); // Episode number is 05 + offset (1) = 06
+        assert!(Path::new(&expected_new_name).exists(), "Renamed file not found");
+        // Clean up the test environment
+        cleanup_temp_directory(test_dir);
+    }
     #[test]
     fn test_get_episodes_with_matching_files() {
         // Create a temporary directory for testing
@@ -119,10 +177,10 @@ mod tests {
         create_dir(temp_dir).expect("Failed to create temporary directory");
 
         // Create some files with "Episode" in the name
-        create_test_file(&temp_dir, "Episode 1.mp3");
-        create_test_file(&temp_dir, "Episode 2.mp3");
-        create_test_file(&temp_dir, "Episode 69.mp3");
-        create_test_file(&temp_dir, "Not_An_Episode.mp3");
+        create_test_file(temp_dir, "Episode 1.mp3");
+        create_test_file(temp_dir, "Episode 2.mp3");
+        create_test_file(temp_dir, "Episode 69.mp3");
+        create_test_file(temp_dir, "Not_An_Episode.mp3");
         // Call the function and check the result
         let result = get_episodes(temp_dir.to_string());
         // Clean up: Delete the temporary directory and its contents
@@ -141,8 +199,8 @@ mod tests {
         create_dir(temp_dir).expect("Failed to create temporary directory");
 
         // Create some files without "Episode" in the name
-        create_test_file(&temp_dir, "Not_An_Episode_1.mp3");
-        create_test_file(&temp_dir, "Not_An_Episode_2.mp3");
+        create_test_file(temp_dir, "Not_An_Episode_1.mp3");
+        create_test_file(temp_dir, "Not_An_Episode_2.mp3");
 
         // Call the function and check the result
         let result = get_episodes(temp_dir.to_string());
@@ -160,7 +218,7 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.err().unwrap().to_string(),
-            "Failed to read the directory"
+            "No such file or directory (os error 2)"
         );
     }
 
