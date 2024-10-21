@@ -5,7 +5,7 @@ Note: `time` is an alias to hyperfine.
 
 The Benchmark is performed on 50k empty files that match the "Episode \d+" regex. The preparation script simply deletes all files and regenerates them.
 ### My Previous ***shudders*** Bash script for renaming...
-```
+```bash
 time --prepare '../benchmarks.sh' '~/.scripts/autorenamer.sh 3'
 Benchmark 1: ~/.scripts/autorenamer.sh 3
   Time (mean ± σ):     53.377 s ±  0.427 s    [User: 18.885 s, System: 35.567 s]
@@ -15,7 +15,7 @@ Benchmark 1: ~/.scripts/autorenamer.sh 3
 ### Release v1.0.2
 
 
-```
+```bash
 time --prepare './benchmarks.sh' 'autorenamer -p test/ -s 3'              
 Benchmark 1: autorenamer -p test/ -s 3
   Time (mean ± σ):      2.183 s ±  0.091 s    [User: 1.573 s, System: 0.580 s]
@@ -23,7 +23,7 @@ Benchmark 1: autorenamer -p test/ -s 3
 ```
 ### Comparison between Bash and v1.0.2
 
-```
+```bash
 time --prepare '../benchmarks.sh' '~/.scripts/autorenamer.sh 3' 'autorenamer -p ../test/ -s 3'
 Benchmark 1: ~/.scripts/autorenamer.sh 3
   Time (mean ± σ):     53.858 s ±  0.583 s    [User: 19.074 s, System: 35.896 s]
@@ -42,7 +42,7 @@ I guess you could say it's pretty quick.
 
 ### Branch `Structs`
 
-```
+```bash
 benchmark --prepare './benchmarks.sh' 'autorenamer -p test -s 3' 
 Benchmark 1: autorenamer -p test -s 3
   Time (mean ± σ):      2.544 s ±  0.094 s    [User: 1.748 s, System: 0.690 s]
