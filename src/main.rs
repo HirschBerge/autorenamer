@@ -7,17 +7,33 @@ use std::{env, error::Error, ffi::OsStr, fs, path::Path};
 #[clap(name = "Autorenamer", version = "1.0.3", author = "HirschBerge")]
 
 pub struct Autorename {
-    #[clap(long = "season", short = 's')]
+    #[clap(
+        long = "season",
+        short = 's',
+        help = "The season of the show to rename."
+    )]
     season: i32,
-    #[clap(long = "path", short = 'p', required = false)]
+    #[clap(
+        long = "path",
+        short = 'p',
+        required = false,
+        help = "A valid path to the directory containing your season episodes."
+    )]
     path: Option<String>,
     #[clap(
         long = "offset",
         short = 'o',
         required = false,
-        allow_hyphen_values = true
+        allow_hyphen_values = true,
+        help = "An integer with a positive or negative number to offset renaming by. i.e. --ofset 5 changes 'Episode 5.mp4' to 'Episode 10.mp4'"
     )] // HACK: allow_hyphen_values just lets this take negative values
     offset: Option<i32>,
+    #[arg(
+        long = "dryrun",
+        short = 'd',
+        help = "Shows the 'whatif' events without actually writing changes to disk"
+    )]
+    dryrun: bool,
 }
 
 #[derive(Debug)]
@@ -72,6 +88,7 @@ fn rename_episodes(
     season: i32,
     base_path: String,
     offset: i32,
+    dryrun: bool,
 ) {
     match files {
         Ok(files) => {
@@ -91,14 +108,22 @@ fn rename_episodes(
                             let old_name = format!("{}/{}", base_path, file);
                             let episode = Episode::new(old_name, new_name);
                             // Perform the file renaming
-                            let _ = fs::rename(
-                                &episode.old_path,
+                            if !dryrun {
+                                let _ = fs::rename(
+                                    &episode.old_path,
+                                    episode.create_new_path(
+                                        base_path.clone(),
+                                        episode.create_ext(),
+                                        file,
+                                    ),
+                                );
+                            } else {
                                 episode.create_new_path(
                                     base_path.clone(),
                                     episode.create_ext(),
                                     file,
-                                ),
-                            );
+                                );
+                            }
                         } else {
                             println!("Failed to parse episode number.");
                         }
@@ -112,10 +137,12 @@ fn rename_episodes(
             println!("Error: {}", err);
         }
     }
+    println!("Ran with parameter dryrun set to '{}'.\nIf true, changes are only printed to screen and not reflected in reality.", &dryrun);
 }
 
 fn main() {
     let args = Autorename::parse();
+    let dryrun: bool = args.dryrun;
     let mut path: String = args.path.unwrap_or_else(|| String::from("")).to_string();
     if path.is_empty() {
         path = env::current_dir()
@@ -126,7 +153,7 @@ fn main() {
     let offset = args.offset.unwrap_or(0);
     let season = args.season;
     let result = get_episodes(path.clone());
-    rename_episodes(result, season, path, offset);
+    rename_episodes(result, season, path, offset, dryrun);
 }
 
 #[cfg(test)]
@@ -154,7 +181,7 @@ mod tests {
         let offset = 1;
 
         // Run the rename_episodes function
-        rename_episodes(files, season, base_path.clone(), offset);
+        rename_episodes(files, season, base_path.clone(), offset, false);
 
         // Assert that the file was renamed correctly
         let expected_new_name = format!("{}/S01E06.mp4", test_dir); // Episode number is 05 + offset (1) = 06
@@ -180,7 +207,7 @@ mod tests {
         let base_path = test_dir.to_string();
         let offset = -1;
         // Run the rename_episodes function
-        rename_episodes(files, season, base_path.clone(), offset);
+        rename_episodes(files, season, base_path.clone(), offset, false);
         // Assert that the file was renamed correctly
         let expected_new_name = format!("{}/S01E04.mp4", test_dir); // Episode number is 05 + offset (1) = 06
         assert!(
