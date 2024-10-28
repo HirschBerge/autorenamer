@@ -92,22 +92,24 @@ fn rename_episodes(
 ) {
     match files {
         Ok(files) => {
+            let re = Regex::new(r"(Episode [0-9]{1,5})(.*?)(\.)").unwrap();
+            // TODO: Include files with "^E[0-9]{2,3}" so that already-processed files can be included.
             for file in files {
-                // TODO: Include files with "^E[0-9]{2,3}" so that already-processed files can be included.
-                let re = Regex::new(r"Episode [0-9]{1,5}").unwrap(); // NOTE: This is probably fine to leave. It works and doesn't overflow the size. See the help. this is a comppile-time error
                 if let Some(captures) = re.captures(&file) {
-                    if let Some(matched_str) = captures.get(0) {
-                        // Extract the numeric part (episode number) from the matched string
+                    // Extract episode number
+                    if let Some(matched_str) = captures.get(1) {
                         let episode_str = &matched_str.as_str()[8..]; // "Episode " is 8 chars long
-                                                                      // Convert the episode number string to i32
                         if let Ok(episode_num) = episode_str.parse::<i32>() {
-                            // Add the offset to the episode number
-                            let new_episode_num = episode_num + offset; // NOTE: offset defaults to 0 so does nothing if an offset is not provided.
-                            let new_name = format!("S{:0>2}E{:0>2}", season, new_episode_num);
-                            // Get old and new file paths
+                            // Adjust episode number by the offset
+                            let new_episode_num = episode_num + offset;
+                            let mut new_name = format!("S{:0>2}E{:0>2}", season, new_episode_num);
+                            let description =
+                                captures.get(2).map(|m| m.as_str().trim()).unwrap_or("");
+                            if !description.is_empty() {
+                                new_name = format!("{} {}", new_name, description);
+                            }
                             let old_name = format!("{}/{}", base_path, file);
                             let episode = Episode::new(old_name, new_name);
-                            // Perform the file renaming
                             if !dryrun {
                                 let _ = fs::rename(
                                     &episode.old_path,
@@ -125,11 +127,13 @@ fn rename_episodes(
                                 );
                             }
                         } else {
-                            println!("Failed to parse episode number.");
+                            println!("Failed to parse episode number in '{}'", file);
                         }
                     }
+                } else if Path::new(&file).extension().is_none() {
+                    println!("File has no extension, skipping!");
                 } else {
-                    println!("Pattern not found in the input text.");
+                    println!("Pattern not found in '{}'", file);
                 }
             }
         }
@@ -137,7 +141,10 @@ fn rename_episodes(
             println!("Error: {}", err);
         }
     }
-    println!("Ran with parameter dryrun set to '{}'.\nIf true, changes are only printed to screen and not reflected in reality.", &dryrun);
+    println!(
+        "Ran with parameter dryrun set to '{}'.\nIf true, changes are only printed to screen and not reflected in reality.",
+        dryrun
+    );
 }
 
 fn main() {
@@ -238,7 +245,28 @@ mod tests {
         // assert!(matching_files.contains(&"Episode 1.mp3".to_string()));
         // assert!(matching_files.contains(&"Episode 2.mp3".to_string()));
     }
+    #[test]
+    fn test_episodes_with_names() {
+        // Create a temporary directory for testing
+        let temp_dir = "test_episodes_with_names";
+        create_dir(temp_dir).expect("Failed to create temporary directory");
 
+        // Create some files with "Episode" in the name
+        create_test_file(temp_dir, "Episode 1 Has a name.mp3");
+        create_test_file(temp_dir, "Episode 2 Has a name also.mp3");
+        create_test_file(temp_dir, "Episode 69 NIIIICE.mp3");
+        create_test_file(temp_dir, "Not_An_Episode.mp3");
+        // Call the function and check the result
+        let result = get_episodes(temp_dir.to_string());
+        rename_episodes(result, 1, temp_dir.to_string(), 0, false);
+        // Clean up: Delete the temporary directory and its contents
+        let matching_files = get_filenames_in_directory(temp_dir).unwrap();
+        cleanup_temp_directory(temp_dir);
+
+        assert!(matching_files.contains(&"S01E01 Has a name.mp3".to_string()));
+        assert!(matching_files.contains(&"S01E02 Has a name also.mp3".to_string()));
+        assert!(matching_files.contains(&"S01E69 NIIIICE.mp3".to_string()));
+    }
     #[test]
     fn test_get_episodes_with_no_matching_files() {
         // Create a temporary directory for testing
@@ -281,5 +309,18 @@ mod tests {
         if Path::new(directory).exists() {
             std::fs::remove_dir_all(directory).expect("Failed to delete temporary directory");
         }
+    }
+    fn get_filenames_in_directory(dir_path: &str) -> std::io::Result<Vec<String>> {
+        let mut filenames = Vec::new();
+
+        // Read the directory
+        for entry in std::fs::read_dir(Path::new(dir_path))? {
+            let entry = entry?;
+            // Get the file name and convert it to a String
+            let file_name = entry.file_name().into_string().unwrap_or_default();
+            filenames.push(file_name);
+        }
+
+        Ok(filenames)
     }
 }
