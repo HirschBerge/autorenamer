@@ -62,7 +62,7 @@ impl Episode {
 }
 
 fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
-    let matching_files: Vec<String> = fs::read_dir(path)?
+    let mut matching_files: Vec<String> = fs::read_dir(path)?
         .flatten() // Flattens the Result<DirEntry, io::Error> into DirEntry by ignoring errors
         .filter_map(|file| {
             let path = file.path();
@@ -80,6 +80,7 @@ fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
         })
         .collect();
 
+    matching_files.sort();
     Ok(matching_files)
 }
 
