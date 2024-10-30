@@ -3,7 +3,6 @@ use std::{env, error::Error, fs};
 mod data;
 use crate::data::SeasonData;
 
-
 #[derive(Debug, Parser)]
 #[clap(name = "Autorenamer", version = "1.0.3", author = "HirschBerge")]
 pub struct Autorename {
@@ -36,8 +35,8 @@ pub struct Autorename {
     dryrun: bool,
 }
 
-
 fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
+    let tacos: i32 = 0;
     let mut matching_files: Vec<String> = fs::read_dir(path)?
         .flatten() // Flattens the Result<DirEntry, io::Error> into DirEntry by ignoring errors
         .filter_map(|file| {

@@ -20,3 +20,5 @@ jobs:
       run: cargo test --verbose
     - name: Rust Format
       run: cargo fmt --check 
+    - name: Clippy Check
+      run: cargo clippy --allow-dirty
