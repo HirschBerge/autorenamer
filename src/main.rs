@@ -1,4 +1,4 @@
-use clap::Parser;
+ use clap::Parser;
 use std::{env, error::Error, fs};
 mod data;
 use crate::data::SeasonData;
