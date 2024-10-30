@@ -1,11 +1,11 @@
 use clap::Parser;
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::{env, error::Error, ffi::OsStr, fs, path::Path};
 // use std::fmt::format;
 
 #[derive(Debug, Parser)]
 #[clap(name = "Autorenamer", version = "1.0.3", author = "HirschBerge")]
-
 pub struct Autorename {
     #[clap(
         long = "season",
@@ -36,16 +36,20 @@ pub struct Autorename {
     dryrun: bool,
 }
 
+lazy_static! {
+    static ref EPISODE_REGEX: Regex = Regex::new(r"(Episode [0-9]{1,5})(.*?)(\.)").unwrap();
+}
+
 #[derive(Debug)]
-struct SeasonData {
-    file: String,
+struct SeasonData<'a> {
+    file: &'a str,
     season: i32,
-    base_path: String,
+    base_path: &'a str,
     offset: i32,
 }
 
-impl SeasonData {
-    fn new(file: String, season: i32, base_path: String, offset: i32) -> SeasonData {
+impl<'a> SeasonData<'a> {
+    fn new(file: &'a str, season: i32, base_path: &'a str, offset: i32) -> SeasonData<'a> {
         SeasonData {
             file,
             season,
@@ -54,9 +58,8 @@ impl SeasonData {
         }
     }
     pub fn process_episode(&self) -> Result<Episode, Box<dyn Error>> {
-        let re = Regex::new(r"(Episode [0-9]{1,5})(.*?)(\.)")?;
         // Check for matches in the file name
-        if let Some(captures) = re.captures(&self.file) {
+        if let Some(captures) = EPISODE_REGEX.captures(self.file) {
             // Extract episode number
             if let Some(matched_str) = captures.get(1) {
                 let episode_str = &matched_str.as_str()[8..]; // "Episode " is 8 chars long
@@ -134,7 +137,7 @@ fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
 
 fn rename_episodes(files: Vec<String>, season: i32, base_path: String, offset: i32, dryrun: bool) {
     for file in files {
-        let current_episode = SeasonData::new(file.clone(), season, base_path.clone(), offset);
+        let current_episode = SeasonData::new(&file, season, &base_path, offset);
         let parsed_data = current_episode.process_episode();
         match parsed_data {
             Ok(data) => {
@@ -144,7 +147,7 @@ fn rename_episodes(files: Vec<String>, season: i32, base_path: String, offset: i
                         data.create_new_path(
                             base_path.clone(),
                             data.create_ext(),
-                            current_episode.file,
+                            current_episode.file.to_string(),
                         ),
                     );
                 } else {
