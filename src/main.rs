@@ -253,8 +253,7 @@ mod tests {
         let result = get_episodes("non_existent_directory".to_string());
         assert!(result.is_err());
         assert_eq!(
-            result.err().unwrap().to_string(),
-            "No such file or directory (os error 2)"
+            result.err().unwrap().to_string(),"No such file or directory (os error 3)"
         );
     }
 
