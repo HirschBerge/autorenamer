@@ -3,6 +3,7 @@ use std::{env, error::Error, fs};
 mod data;
 use crate::data::SeasonData;
 
+
 #[derive(Debug, Parser)]
 #[clap(name = "Autorenamer", version = "1.0.3", author = "HirschBerge")]
 pub struct Autorename {
