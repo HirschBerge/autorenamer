@@ -68,14 +68,14 @@ fn rename_episodes(files: Vec<String>, season: i32, base_path: String, offset: i
             Ok(data) => {
                 let new_name = data.create_new_path(&file, data.create_ext(), false);
                 if new_name != data.old_path {
-                if !dryrun {
-                    let _ = fs::rename(
-                        &data.old_path,
-                        data.create_new_path(&file, data.create_ext(), true),
-                    );
-                } else {
-                    data.create_new_path(&file, data.create_ext(),true);
-                }
+                    if !dryrun {
+                        let _ = fs::rename(
+                            &data.old_path,
+                            data.create_new_path(&file, data.create_ext(), true),
+                        );
+                    } else {
+                        data.create_new_path(&file, data.create_ext(), true);
+                    }
                 }
             }
             Err(err) => {
