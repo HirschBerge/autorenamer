@@ -42,3 +42,17 @@ jobs:
     - uses: actions/checkout@v4
     - name: Run tests
       run: cargo test --verbose
+  no_dbg:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Check for "dbg"
+      run: |
+        if grep -r --exclude-dir={.*,.git} --exclude=*.{exe,bin,so,dll} "dbg" .; then
+          echo "Found 'dbg' in the files."
+        else
+          echo "'dbg' not found in any files."
+          exit 1  # Exit with an error code if not found
+        fi
