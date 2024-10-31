@@ -1,7 +1,9 @@
 use clap::Parser;
 use std::{env, error::Error, fs};
 mod data;
+mod parsing;
 use crate::data::SeasonData;
+use regex::Regex;
 
 #[derive(Debug, Parser)]
 #[clap(name = "Autorenamer", version = "1.0.3", author = "HirschBerge")]
@@ -36,17 +38,17 @@ pub struct Autorename {
 }
 
 fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
+    let re = Regex::new(r"(Episode \d{1,5}|E\d{1,5})")?;
     let mut matching_files: Vec<String> = fs::read_dir(path)?
         .flatten() // Flattens the Result<DirEntry, io::Error> into DirEntry by ignoring errors
         .filter_map(|file| {
             let path = file.path();
             if path.is_file() {
-                // Check for "Episode " in the file name
-                // TODO: Include files with "^E[0-9]{2,3}" so that already-processed files can be included.
                 if let Some(file_name) = path.file_name() {
                     let file_name_str = file_name.to_string_lossy();
-                    if file_name_str.contains("Episode ") {
-                        return Some(file_name_str.to_string()); // Push the matching file name
+                    // Check if the file name matches the regex
+                    if re.is_match(&file_name_str) {
+                        return Some(file_name_str.to_string());
                     }
                 }
             }
@@ -64,17 +66,16 @@ fn rename_episodes(files: Vec<String>, season: i32, base_path: String, offset: i
         let parsed_data = current_episode.process_episode();
         match parsed_data {
             Ok(data) => {
-                if !dryrun {
-                    let _ = fs::rename(
-                        &data.old_path,
-                        data.create_new_path(
-                            base_path.clone(),
-                            data.create_ext(),
-                            current_episode.file.to_string(),
-                        ),
-                    );
-                } else {
-                    data.create_new_path(base_path.clone(), data.create_ext(), file);
+                let new_name = data.create_new_path(&file, data.create_ext(), false);
+                if new_name != data.old_path {
+                    if !dryrun {
+                        let _ = fs::rename(
+                            &data.old_path,
+                            data.create_new_path(&file, data.create_ext(), true),
+                        );
+                    } else {
+                        data.create_new_path(&file, data.create_ext(), true);
+                    }
                 }
             }
             Err(err) => {
@@ -185,6 +186,7 @@ mod tests {
         create_test_file(temp_dir, "Episode 1.mp3");
         create_test_file(temp_dir, "Episode 2.mp3");
         create_test_file(temp_dir, "Episode 69.mp3");
+        create_test_file(temp_dir, "S22E73 A Massive Change.mp3");
         create_test_file(temp_dir, "Not_An_Episode.mp3");
         // Call the function and check the result
         let result = get_episodes(temp_dir.to_string());
@@ -192,7 +194,7 @@ mod tests {
         cleanup_temp_directory(temp_dir);
         assert!(result.is_ok());
         let matching_files = result.unwrap();
-        assert_eq!(matching_files.len(), 3);
+        assert_eq!(matching_files.len(), 4);
         // assert!(matching_files.contains(&"Episode 1.mp3".to_string()));
         // assert!(matching_files.contains(&"Episode 2.mp3".to_string()));
     }
@@ -207,6 +209,7 @@ mod tests {
         // Create some files with "Episode" in the name
         create_test_file(temp_dir, "Episode 1 Has a name.mp3");
         create_test_file(temp_dir, "Episode 2 Has a name also.mp3");
+        create_test_file(temp_dir, "S01E03 This a name also.mp3");
         create_test_file(temp_dir, "Episode 69 NIIIICE.mp3");
         create_test_file(temp_dir, "Not_An_Episode.mp3");
         // Call the function and check the result
@@ -222,9 +225,9 @@ mod tests {
         // Clean up: Delete the temporary directory and its contents
         let matching_files = get_filenames_in_directory(temp_dir).unwrap();
         cleanup_temp_directory(temp_dir);
-
         assert!(matching_files.contains(&"S01E01 Has a name.mp3".to_string()));
         assert!(matching_files.contains(&"S01E02 Has a name also.mp3".to_string()));
+        assert!(matching_files.contains(&"S01E03 This a name also.mp3".to_string()));
         assert!(matching_files.contains(&"S01E69 NIIIICE.mp3".to_string()));
     }
     #[test]
