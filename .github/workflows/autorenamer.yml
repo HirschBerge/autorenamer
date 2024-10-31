@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  cargo build:
+  cargo_build:
 
     runs-on: ubuntu-latest
 
@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build
       run: cargo build --verbose
-  cargo format:
+  cargo_format:
 
     runs-on: ubuntu-latest
 
@@ -26,7 +26,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Rust Format
       run: cargo fmt --check 
-  cargo clippy:
+  cargo_clippy:
 
     runs-on: ubuntu-latest
 
@@ -34,7 +34,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Run Clippy
       run: cargo clippy --allow-dirty -- -D warnings
-  cargo test:
+  cargo_test:
 
     runs-on: ubuntu-latest
 
