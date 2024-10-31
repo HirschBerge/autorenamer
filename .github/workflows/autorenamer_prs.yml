@@ -1,9 +1,7 @@
-name: Autorenamer Checks
+name: cargo pr checks
 
 on:
   pull_request:
-    branches: [ "main" ]
-  push:
     branches: [ "main" ]
 
 env:
