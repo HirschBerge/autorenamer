@@ -61,13 +61,15 @@ impl<'a> SeasonData<'a> {
         match parse_episode(self.file) {
             Ok((_, (episode_num, title))) => {
                 let new_episode_num = episode_num + self.offset;
-                let mut new_path = format!(
+                let new_path = format!(
                     "{}/S{:0>2}E{:0>2}",
                     self.base_path, self.season, new_episode_num
                 );
-                if !title.is_empty() {
-                    new_path = format!("{} {}", new_path, title);
-                }
+                let new_path = if !title.is_empty() {
+                    format!("{} {}", new_path, title)
+                } else {
+                    new_path
+                };
                 let old_name = format!("{}/{}", self.base_path, self.file);
                 Ok(Episode::new(old_name, new_path))
             }
