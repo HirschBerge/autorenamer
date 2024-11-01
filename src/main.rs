@@ -61,7 +61,12 @@ fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
 }
 
 fn rename_episodes(files: Vec<String>, season: i32, base_path: String, offset: i32, dryrun: bool) {
-    for file in files {
+    let mut printout = true;
+    if files.len() >= 100 {
+        println!("Processing {} files...", files.len());
+        printout = false;
+    }
+    files.into_iter().for_each(|file| {
         let current_episode = SeasonData::new(&file, season, &base_path, offset);
         let parsed_data = current_episode.process_episode();
         match parsed_data {
@@ -71,7 +76,7 @@ fn rename_episodes(files: Vec<String>, season: i32, base_path: String, offset: i
                     if !dryrun {
                         let _ = fs::rename(
                             &data.old_path,
-                            data.create_new_path(&file, data.create_ext(), true),
+                            data.create_new_path(&file, data.create_ext(), printout),
                         );
                     } else {
                         data.create_new_path(&file, data.create_ext(), true);
@@ -82,7 +87,7 @@ fn rename_episodes(files: Vec<String>, season: i32, base_path: String, offset: i
                 println!("{}", err);
             }
         }
-    }
+    });
     println!(
         "Ran with parameter dryrun set to '{}'.\nIf true, changes are only printed to screen and not reflected in reality.",
         dryrun
