@@ -3,6 +3,7 @@ use std::{env, error::Error, fs};
 mod data;
 mod parsing;
 use crate::data::SeasonData;
+use notify_rust::Notification;
 use regex::Regex;
 
 #[derive(Debug, Parser)]
@@ -60,9 +61,17 @@ fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
     Ok(matching_files)
 }
 
-fn rename_episodes(files: Vec<String>, season: i32, base_path: String, offset: i32, dryrun: bool) {
+fn rename_episodes(
+    files: Vec<String>,
+    season: i32,
+    base_path: String,
+    offset: i32,
+    dryrun: bool,
+    notify: bool,
+) {
     let mut printout = true;
-    if files.len() >= 100 {
+    let count = files.len();
+    if count >= 100 {
         println!("Processing {} files...", files.len());
         printout = false;
     }
@@ -88,10 +97,18 @@ fn rename_episodes(files: Vec<String>, season: i32, base_path: String, offset: i
             }
         }
     });
-    println!(
-        "Ran with parameter dryrun set to '{}'.\nIf true, changes are only printed to screen and not reflected in reality.",
-        dryrun
-    );
+    if notify {
+        match Notification::new()
+            .summary(format!("Renaming Season {} complete", season).as_str())
+            .body(format!("A total of {} episodes renamed", count).as_str())
+            .appname("anime")
+            .timeout(5)
+            .show()
+        {
+            Ok(_) => {}
+            Err(e) => eprintln!("{}", e),
+        }
+    }
 }
 
 fn main() {
@@ -109,7 +126,7 @@ fn main() {
     let result = get_episodes(path.clone());
     match result {
         Ok(result) => {
-            rename_episodes(result, season, path, offset, dryrun);
+            rename_episodes(result, season, path, offset, dryrun, true);
         }
         Err(err) => {
             println!("Error: {}", err);
@@ -143,7 +160,7 @@ mod tests {
         let offset = 1;
 
         // Run the rename_episodes function
-        rename_episodes(files, season, base_path.clone(), offset, false);
+        rename_episodes(files, season, base_path.clone(), offset, false, false);
 
         // Assert that the file was renamed correctly
         let expected_new_name = format!("{}/S01E06.mp4", test_dir); // Episode number is 05 + offset (1) = 06
@@ -171,7 +188,7 @@ mod tests {
         let base_path = test_dir.to_string();
         let offset = -1;
         // Run the rename_episodes function
-        rename_episodes(files, season, base_path.clone(), offset, false);
+        rename_episodes(files, season, base_path.clone(), offset, false, false);
         // Assert that the file was renamed correctly
         let expected_new_name = format!("{}/S01E04.mp4", test_dir); // Episode number is 05 + offset (1) = 06
         assert!(
@@ -221,7 +238,7 @@ mod tests {
         let result = get_episodes(temp_dir.to_string());
         match result {
             Ok(result) => {
-                rename_episodes(result, 1, temp_dir.to_string(), 0, false);
+                rename_episodes(result, 1, temp_dir.to_string(), 0, false, false);
             }
             Err(err) => {
                 println!("Error: {}", err);
