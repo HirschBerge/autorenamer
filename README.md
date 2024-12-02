@@ -16,23 +16,22 @@ This is purely a hypothetical need. I do not partake in, or condone piracy (exce
 
 ### Running
 
-```
-autorenamer --help
-Rust Autorenamer 
+```bash
+Video file renamer for library management
 
-USAGE:
-    autorenamer [OPTIONS] --season <SEASON>
+Usage:
+  > autorenamer {flags} ...(args)
 
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+Flags:
+  -s, --season <int>: Season of the show to rename
+  -p, --path <string>: Path to the directory containing your season
+  -o, --offset <int>: An integer with a positive or negative number to offset renaming by. i.e. --ofset 5 changes 'Episode 5.mp4' to 'Episode 10.mp4'
+  -d, --dryrun: Shows the 'whatif' events without actually writing changes to disk
+  -h, --help: Print help
+  -V, --version: Print version
 
-OPTIONS:
-    -p, --path <DIRECTORY>    Specify the path (optional, defaults to current directory)
-    -s, --season <SEASON>     Specify the season as a digit.
-
-EXAMPLE:
-autorenamer --season 1 --path ~/Videos/Anime/Monogatari\ Series/Season\ 1\ Bakemonogatari
+Parameters:
+  ...args <external-argument>: all other arguments to the command
 ```
 
 ### Benchmarks
