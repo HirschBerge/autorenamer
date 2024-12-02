@@ -40,7 +40,6 @@
           cargo-deny
           cargo-edit
           cargo-watch
-          cargo-bench
           cargo-flamegraph
           rust-analyzer
           bacon
