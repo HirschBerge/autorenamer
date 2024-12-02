@@ -37,7 +37,6 @@ pub fn rename_episodes(
     let mut printout = true;
     let count = files.len();
     if count >= 100 {
-        println!("Processing {} files...", files.len());
         printout = false;
     }
     files.into_iter().for_each(|file| {
