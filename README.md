@@ -37,3 +37,5 @@ autorenamer --season 1 --path ~/Videos/Anime/Monogatari\ Series/Season\ 1\ Bakem
 
 ### Benchmarks
 See [Benchmarks.md](./Benchmarks.md)
+### TODO: Check out feasibility of implementing [divan](https://github.com/nvzqz/divan)
+
