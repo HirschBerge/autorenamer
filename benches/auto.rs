@@ -7,11 +7,18 @@ fn main() {
     divan::main();
 }
 
-#[divan::bench]
-fn bench_rename(bencher: divan::Bencher) {
+#[divan::bench(consts = [
+    1000,
+    10000,
+    20000,
+    30000,
+    40000,
+    50000,
+])]
+fn bench_rename<const NUMS: i32>(bencher: divan::Bencher) {
     let base_path = "./test_files/";
     create_dir_all(base_path).expect("Failed to create directory");
-    for number in 1..=50000 {
+    for number in 1..=NUMS {
         let filename = format!("{}Episode {:05}.mp4", base_path, number);
         let mut file = File::create(&filename).expect("Failed to create file");
         file.write_all(b"").expect("Failed to write to file");
