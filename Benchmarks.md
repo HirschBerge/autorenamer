@@ -1,7 +1,8 @@
 # Benchmarks
-# # Criteria
+## Disclaimers
+These benchmarks are run on a system running btrfs. Running ext4 on a much weaker laptop provides faster times. Increasingly so the larger the benchmark is. I would not consider the difference to be noticable outside of benchmarking at large volumes.
+## Criteria
   
-Note: `time` is an alias to hyperfine .
   
 The Benchmark is performed on 50k empty files that match the "Episode \d+" regex. The preparation script simply deletes all files and regenerates them.
 ### My Previous ***shudders*** Bash script for renaming...
