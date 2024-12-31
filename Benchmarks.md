@@ -39,13 +39,15 @@ Summary
 ```
 I guess you could say it's pretty quick.
 
-
-### Branch `Structs`
-
+### Using Divan to get best timing via cargo
 ```bash
-benchmark --prepare './benchmarks.sh' 'autorenamer -p test -s 3' 
-Benchmark 1: autorenamer -p test -s 3
-  Time (mean ± σ):      2.544 s ±  0.094 s    [User: 1.748 s, System: 0.690 s]
-  Range (min … max):    2.405 s …  2.714 s    10 runs
+Timer precision: 20 ns
+auto             fastest       │ slowest       │ median        │ mean          │ samples │ iters
+╰─ bench_rename                │               │               │               │         │
+   ├─ 1000       2.744 ms      │ 27.76 ms      │ 2.821 ms      │ 3.101 ms      │ 100     │ 100
+   ├─ 10000      25.74 ms      │ 287.7 ms      │ 27.03 ms      │ 29.81 ms      │ 100     │ 100
+   ├─ 20000      51.93 ms      │ 581.6 ms      │ 56.32 ms      │ 61.68 ms      │ 100     │ 100
+   ├─ 30000      81.62 ms      │ 884.3 ms      │ 90.08 ms      │ 97.52 ms      │ 100     │ 100
+   ├─ 40000      106.7 ms      │ 1.245 s       │ 112.7 ms      │ 124.1 ms      │ 100     │ 100
+   ╰─ 50000      136.2 ms      │ 1.45 s        │ 148.9 ms      │ 161.3 ms      │ 100     │ 100
 ```
-
