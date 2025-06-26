@@ -42,6 +42,7 @@
           cargo-watch
           cargo-flamegraph
           rust-analyzer
+          just
           bacon
         ];
       };
