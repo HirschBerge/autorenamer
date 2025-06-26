@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-folder_path="test/"
+folder_path="test_files/"
 if [ ! -d "$SCRIPT_DIR/$folder_path" ]; then
     mkdir -p "$SCRIPT_DIR/$folder_path"
 fi
