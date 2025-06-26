@@ -35,8 +35,9 @@ pub fn rename_episodes(
     notify: bool,
 ) {
     let mut printout = true;
-    let count = files.len();
-    if count >= 100 {
+    let mut count = 0;
+    let workload = files.len();
+    if workload >= 100 {
         printout = false;
     }
     files.into_iter().for_each(|file| {
@@ -51,6 +52,7 @@ pub fn rename_episodes(
                             &data.old_path,
                             data.create_new_path(&file, data.create_ext(), printout),
                         );
+                        count += 1;
                     } else {
                         data.create_new_path(&file, data.create_ext(), true);
                     }
