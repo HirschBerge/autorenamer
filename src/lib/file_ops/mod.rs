@@ -1,7 +1,17 @@
 use crate::data::SeasonData;
 use notify_rust::Notification;
 use regex::Regex;
-use std::{error::Error, fs};
+use std::{error::Error, fs, path::PathBuf};
+
+pub fn gen_home() -> Option<PathBuf> {
+    match dirs::home_dir() {
+        Some(path) => Some(path),
+        None => {
+            println!("Unable to determine home directory.");
+            None
+        }
+    }
+}
 
 pub fn get_episodes(path: String) -> Result<Vec<String>, Box<dyn Error>> {
     let re = Regex::new(r"(Episode \d{1,5}|E\d{1,5})")?;
@@ -63,12 +73,15 @@ pub fn rename_episodes(
             }
         }
     });
+    let home_dir = gen_home().expect("Every OS has a home dir");
+    let icon_path = home_dir.join(".config/notification_icons/anime.svg");
     if notify {
         match Notification::new()
             .summary(format!("Renaming Season {} complete", season).as_str())
             .body(format!("A total of {} episodes renamed", count).as_str())
             .appname("anime")
             .timeout(5)
+            .icon(icon_path.to_str().expect("Nothing to see here"))
             .show()
         {
             Ok(_) => {}
