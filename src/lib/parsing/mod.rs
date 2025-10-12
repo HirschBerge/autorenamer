@@ -3,7 +3,7 @@ use nom::{
     bytes::complete::{tag, take_until},
     character::complete::{digit1, space1},
     combinator::map_res,
-    IResult,
+    IResult, Parser,
 };
 
 /// Parses a string input to extract an episode number and title.
@@ -23,7 +23,7 @@ use nom::{
 ///
 pub fn parse_episode(input: &str) -> IResult<&str, (i32, &str)> {
     // NOTE: Try to find either "Episode" or "E" followed by the number and title
-    alt((parse_new_episode, reparse_episode))(input)
+    alt((parse_new_episode, reparse_episode)).parse(input)
 }
 
 /// Parses a full episode string and returns a tuple containing the episode number and title.
@@ -47,7 +47,7 @@ pub fn parse_new_episode(input: &str) -> IResult<&str, (i32, &str)> {
     let (input, _) = take_until("Episode")(input)?;
     let (input, _) = tag("Episode")(input)?;
     let (input, _) = space1(input)?;
-    let (input, episode_number) = map_res(digit1, str::parse::<i32>)(input)?;
+    let (input, episode_number) = map_res(digit1, str::parse::<i32>).parse(input)?;
     let (input, title) = take_until(".")(input)?;
     let (input, _) = tag(".")(input)?;
 
@@ -74,7 +74,7 @@ pub fn parse_new_episode(input: &str) -> IResult<&str, (i32, &str)> {
 pub fn reparse_episode(input: &str) -> IResult<&str, (i32, &str)> {
     let (input, _) = take_until("E")(input)?;
     let (input, _) = tag("E")(input)?;
-    let (input, episode_number) = map_res(digit1, str::parse::<i32>)(input)?;
+    let (input, episode_number) = map_res(digit1, str::parse::<i32>).parse(input)?;
     let (input, title) = take_until(".")(input)?;
     let (input, _) = tag(".")(input)?;
 
