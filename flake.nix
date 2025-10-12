@@ -47,5 +47,17 @@
         ];
       };
     });
+    packages = forEachSupportedSystem ({pkgs}: {
+      default = pkgs.rustPlatform.buildRustPackage {
+        pname = "autorenamer";
+        version = "1.0.3"; # Should match your Cargo.toml version
+        # The `src` is the flake's own directory
+        src = self;
+        cargoLock = {
+          lockFile = ./Cargo.lock;
+        };
+        nativeBuildInputs = with pkgs; [pkg-config];
+      };
+    });
   };
 }
