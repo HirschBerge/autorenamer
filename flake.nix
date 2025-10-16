@@ -4,10 +4,12 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     rust-overlay.url = "github:oxalica/rust-overlay";
+    naersk.url = "github:nix-community/naersk";
   };
 
   outputs = {
     self,
+    naersk,
     nixpkgs,
     rust-overlay,
   }: let
@@ -33,6 +35,7 @@
   in {
     devShells = forEachSupportedSystem ({pkgs}: {
       default = pkgs.mkShell {
+        env.RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
         packages = with pkgs; [
           rustToolchain
           openssl
@@ -47,15 +50,17 @@
         ];
       };
     });
-    packages = forEachSupportedSystem ({pkgs}: {
-      default = pkgs.rustPlatform.buildRustPackage {
+    packages = forEachSupportedSystem ({pkgs}: let
+      naersklib = pkgs.callPackage naersk {};
+    in {
+      default = naersklib.buildPackage {
         pname = "autorenamer";
-        version = "1.0.3"; # Should match your Cargo.toml version
+        version = "1.0.3";
         # The `src` is the flake's own directory
         src = self;
-        cargoLock = {
-          lockFile = ./Cargo.lock;
-        };
+        # cargoLock = {
+        #   lockFile = ./Cargo.lock;
+        # };
         nativeBuildInputs = with pkgs; [pkg-config];
       };
     });
