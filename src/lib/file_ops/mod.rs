@@ -73,7 +73,8 @@ pub fn rename_episodes(
             }
         }
     });
-    let home_dir = gen_home().expect("Every OS has a home dir");
+    let home_dir =
+        gen_home().expect("Every OS has a home dir. Or does it? Hey Vsauce! Michael here");
     let icon_path = home_dir.join(".config/notification_icons/anime.svg");
     if notify {
         match Notification::new()
