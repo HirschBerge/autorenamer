@@ -2,7 +2,7 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_until},
     character::complete::{digit1, space1},
-    combinator::map_res,
+    combinator::{map_res, opt},
     IResult, Parser,
 };
 
@@ -27,6 +27,8 @@ pub fn parse_episode(input: &str) -> IResult<&str, (i32, &str)> {
 }
 
 /// Parses a full episode string and returns a tuple containing the episode number and title.
+/// It intelligently handles cases where the word 'Episode' appears in the show's title
+/// by searching for the occurrence of 'Episode' that is actually followed by the episode number.
 ///
 /// # Arguments
 ///
@@ -44,14 +46,22 @@ pub fn parse_episode(input: &str) -> IResult<&str, (i32, &str)> {
 ///
 ///
 pub fn parse_new_episode(input: &str) -> IResult<&str, (i32, &str)> {
-    let (input, _) = take_until("Episode")(input)?;
-    let (input, _) = tag("Episode")(input)?;
-    let (input, _) = space1(input)?;
-    let (input, episode_number) = map_res(digit1, str::parse::<i32>).parse(input)?;
-    let (input, title) = take_until(".")(input)?;
-    let (input, _) = tag(".")(input)?;
+    let (after_take, _) = take_until("Episode")(input)?;
+    let (after_tag, _) = tag("Episode")(after_take)?;
+    let (after_space, _) = space1(after_tag)?;
 
-    Ok((input, (episode_number, title.trim())))
+    let (remaining, episode_number_opt) =
+        opt(map_res(digit1, str::parse::<i32>)).parse(after_space)?;
+
+    if let Some(episode_number) = episode_number_opt {
+        // We found the number. `remaining` is the input after the number.
+        let (after_title, title) = take_until(".")(remaining)?;
+        let (rem, _) = tag(".")(after_title)?;
+        Ok((rem, (episode_number, title.trim())))
+    } else {
+        //NOTE: Recursively calls this function again so as to deal with all "fake" Episodes
+        parse_new_episode(after_tag)
+    }
 }
 
 /// Parses a string representing an episode into its episode number and title.
