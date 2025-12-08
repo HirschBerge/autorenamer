@@ -55,12 +55,8 @@
     in {
       default = naersklib.buildPackage {
         pname = "autorenamer";
-        version = "1.0.3";
-        # The `src` is the flake's own directory
+        version = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.version;
         src = self;
-        # cargoLock = {
-        #   lockFile = ./Cargo.lock;
-        # };
         nativeBuildInputs = with pkgs; [pkg-config];
       };
     });

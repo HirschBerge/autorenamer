@@ -13,4 +13,4 @@ bench:
 test:
         {{nixdev}} cargo test
 hyper:
-        hyperfine './target/release/autorenamer {{hypr}}' './target/debug/autorenamer {{hypr}}'  --prepare ./benchmarks.sh --runs 5
+        hyperfine 'autorenamer {{hypr}}' './target/debug/autorenamer {{hypr}}'  --prepare ./benchmarks.sh --runs 5
